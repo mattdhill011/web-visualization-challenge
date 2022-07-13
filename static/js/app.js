@@ -1,3 +1,4 @@
+// I can not run a local file, so I link to the file as it appears on my github page
 url = 'https://raw.githubusercontent.com/mattdhill011/web-visualization-challenge/main/samples.json'
 
 
@@ -19,6 +20,35 @@ d3.json(url).then(function(data) {
         let bbtype = metadata.bbtype;
         let wfreq = metadata.wfreq;
 
+        // Here we put in the options for the database selector
+        var idNames = data.names;
+
+        // Now we build the drop down menu, first starting with an empty string
+        var selectIdList = ''
+
+        // Then looping through the list of id names we add a line of html code that
+        // denotes an option with value equal to the index and text equal to the id name.        
+        for (let i = 0; i < idNames.length; i++) {
+            selectIdList += `<option value=${i}>${data.names[i]}</option>`;
+        }
+
+        // Once done, we insert that html into the selDataset div
+        d3.select("#selDataset").html(selectIdList);
+
+        // Here we build the metadata demographics text box
+        var demographicInfo = `
+        <p>
+            Ethnicity: ${ethnicity}<br>
+            Gender: ${gender}<br>
+            Age: ${age}<br>
+            Location: ${location}<br>
+            bbtype: ${bbtype}<br>
+            wfreq: ${wfreq}
+        </p>`;
+
+        // Then select the textbox by its ID and put the new html formated text in.
+        d3.select("#sample-metadata").html(demographicInfo);
+
         // For the bar graph we only want the to 10, everything is already in order so all we have to do
         // is slice for the first 10 and reverse them to account for plotly's formating.
         let sampleValues = sample.sample_values.slice(0,10).reverse();
@@ -28,19 +58,7 @@ d3.json(url).then(function(data) {
         // to turn them all into strings
         function idName(ids) {
             return "OTU " + ids.toString();
-        }  
-
-        // Here we build the demographics text box
-        var demographicInfo = `
-        Ethnicity: ${ethnicity}
-        Gender: ${gender}
-        Age: ${age}
-        Location: ${location}
-        bbtype: ${bbtype}
-        wfreq: ${wfreq}`;
-
-        // Then select the textbox by its ID and put the new text in.
-        d3.select("#sample-metadata").text(demographicInfo);
+        }        
     
         // The trace for the bar chart
         let trace1 = {
@@ -77,7 +95,9 @@ d3.json(url).then(function(data) {
                 size: sample.sample_values,
                 color: sample.otu_ids
             },
-            text: sample.otu_ids
+
+            // We use the idName function we used earlier to change the id names to text
+            text: sample.otu_ids.map(idName)
         };
 
         var bubbleData = [trace2]
@@ -94,35 +114,45 @@ d3.json(url).then(function(data) {
         };
 
         Plotly.newPlot('bubble', bubbleData, bubbleLayout)
-    }
+    };
 
-
-    // I'm trying to get the dropdown menu to work, but I have no idea how to do that right now
-
-    // The intention is to get the index number of the Id selected and then run the init function again with
-    // the new index, but I'm not sure how to get the menu to list all the available ids
-    d3.selectAll("#selDataset").on("change", updatePlotly);
-
-    function updatePlotly() {
-        var dropdownMenu = d3.select("#selDataset");
-        var dataset = dropdownMenu.property("value");
-
-        var newId = 0;
-
-        for (let i = 0; i < data.samples.length; i++) {
-            if (dataset === data.samples[i].id) {
-                newId = i;
-            }
-        }
-
-        updatePlotly;
-    }
-
-    function updatePlotly(newId) {
-        console.log(newId);
-    }
 
     // Here we initialize the graphs with a default ID number
     init(0);
 });
 
+d3.selectAll("#selDataset").on("change", optionChanged);
+
+function optionChanged(value) {
+    updatePlotly(value);
+};
+
+
+function updatePlotly(newdata) {
+
+    d3.json(url).then(function(data) {
+    
+        let name = data.names[id];
+        let metadata = data.metadata[id]
+        let sample = data.samples[id]
+
+        let ethnicity = metadata.ethnicity;
+        let gender = metadata.gender;
+        let age = metadata.age;
+        let location = metadata.location;
+        let bbtype = metadata.bbtype;
+        let wfreq = metadata.wfreq;
+
+        var demographicInfo = `
+            <p>
+                Ethnicity: ${ethnicity}<br>
+                Gender: ${gender}<br>
+                Age: ${age}<br>
+                Location: ${location}<br>
+                bbtype: ${bbtype}<br>
+                wfreq: ${wfreq}
+            </p>`;
+
+        d3.select("#sample-metadata").html(demographicInfo);
+    });
+};
